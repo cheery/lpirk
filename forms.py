@@ -17,8 +17,13 @@ def demonstration():
     ])
     gcd_b.introduce()
 
+    program = {
+        "gcd": [gcd_a, gcd_b]
+    }
+
     assert all_eq(gcd_a.inputs, gcd_b.inputs)
     assert is_complementary(gcd_a.body[0], gcd_b.body[0]) 
+    return program
 
 class Procedure(object):
     def __init__(self, label, inputs, outputs, body):
@@ -109,6 +114,15 @@ def is_complementary(a, b):
     if not is_complementary_name(a.name, b.name):
         return False
     return all_eq(a.inputs, b.inputs)
+
+def is_eq(self, other):
+    if self.name != other.name:
+        return False
+    if not all_eq(self.inputs, other.inputs):
+        return False
+    if not all_eq(self.outputs, other.outputs):
+        return False
+    return True
 
 if __name__=='__main__':
     demonstration()

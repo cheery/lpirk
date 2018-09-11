@@ -14,16 +14,47 @@ it'd be nice to reuse this project rather see the work getting duplicated.
 
 The backend target of this project is Javascript.
 
+## Progress
+
+`python jsb.py` produces the following output:
+
+    function gcd (v_a, v_b) {
+      if (!=(v_b, 0)) {
+        [v_c] = mod(v_a, v_b);
+        [v_d] = gcd(v_b, v_c);
+        return v_d;
+      } else {
+        return v_a;
+      }
+    }
+
+The output should be rewritten to look like this:
+
+    function gcd (v_a, v_b) {
+      var v_c, v_d;
+      if (v_b != 0) {
+        v_c = v_a % v_b;
+        v_d = gcd(v_b, v_c);
+        return v_d;
+      } else {
+        return v_a;
+      }
+    }
+
+After this point the relooper can be introduced.
+
 ## Directory contents
 
  * lexing.py - For sample program inputs and other such things.
  * forms.py - Formats and structured used in the system.
+ * jsb.py - Javascript backend.
 
 ## Related papers and texts
 
  * [Jorge Navas](https://jorgenavas.github.io)
 "Horn-Clauses as an Intermediate Representation for Program Analysis and Transformation"
  * [Delimited continuations](https://en.wikipedia.org/wiki/Delimited_continuation)
+ * [Emscripten's relooper algorithm](https://www.researchgate.net/publication/221320724_Emscripten_an_LLVM-to-JavaScript_compiler)
 
 ## Errors made during development
 
