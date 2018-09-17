@@ -14,6 +14,12 @@ def generate_function(name, program):
         arguments.append(symtab.get_symbol(var))
     statements = []
     statements.append( build_from_tree(tree, 0, symtab) )
+    new_variables = []
+    for varname in symtab.labels.values():
+        if varname in arguments:
+            continue
+        new_variables.append(varname)
+    statements.insert(0, "var {};".format(", ".join(new_variables)))
     print "function {} ({}) {{\n  {}\n}}".format(name,
         ", ".join(arguments), 
         "\n  ".join(statements))
@@ -72,6 +78,9 @@ class SymbolTable(object):
             # TODO: We got to hook a js-stringifier here.
             return repr(variable.value)
         key = (variable.operation, variable.index)
+        return self.get_key_symbol(key)
+
+    def get_key_symbol(self, key):
         if key in self.labels:
             return self.labels[key]
         else:
@@ -90,12 +99,7 @@ def build_from_tree(branch, index, symtab):
         _, first = branch
         out = []
         for operation in first.body[index:]:
-            out.append("[{2}] = {0}({1});".format(
-                operation.name,
-                ", ".join(symtab.get_symbol(var)
-                    for var in operation.inputs),
-                ", ".join(symtab.get_symbol(var)
-                    for var in operation.outputs)))
+            out.append(format_operation(operation, symtab))
         retvars = []
         for var in first.outputs:
             retvars.append(symtab.get_symbol(var))
@@ -108,25 +112,60 @@ def build_from_tree(branch, index, symtab):
         _, cutoff, first, left, right = branch
         out = []
         for operation in first.body[index:cutoff]:
-            out.append("[{2}] = {0}({1});".format(
-                operation.name,
-                ", ".join(symtab.get_symbol(var)
-                    for var in operation.inputs),
-                ", ".join(symtab.get_symbol(var)
-                    for var in operation.outputs)))
+            out.append(format_operation(operation, symtab))
         operation = first.body[cutoff]
-        cond = "{0}({1})".format(
-            operation.name,
-            ", ".join(symtab.get_symbol(var)
-                for var in operation.inputs))
-        last = "if ({}) {{\n    {}\n  }} else {{\n    {}\n  }}".format(
-            cond,
+        last = "{} {{\n    {}\n  }} else {{\n    {}\n  }}".format(
+            format_guard(operation, symtab),
             build_from_tree(left, cutoff+1, symtab).replace('\n', '\n  '),
             build_from_tree(right, cutoff+1, symtab).replace('\n', '\n  '),
         )
         out.append(last)
         return "\n  ".join(out)
     assert False, branch
+
+def format_operation(operation, symtab):
+    if operation.name == "mod" and len(operation.inputs) == 2 and len(operation.outputs) == 1:
+        return "{} = {} % {};".format(
+            symtab.get_symbol(operation.outputs[0]),
+            symtab.get_symbol(operation.inputs[0]),
+            symtab.get_symbol(operation.inputs[1]))
+    else:
+        text = "{0}({1});".format(
+            operation.name,
+            ", ".join(symtab.get_symbol(var) for var in operation.inputs))
+        return demultiplex_output(text, operation.outputs, symtab)
+
+def demultiplex_output(text, outputs, symtab):
+    if len(outputs) == 0:
+        return text
+    elif len(outputs) == 1:
+        return "{} = {}".format(
+            symtab.get_symbol(outputs[0]),
+            text)
+    else:
+        key = (outputs[0].operation, None)
+        mux = symtab.get_key_symbol(key)
+        return "{} = {}; {}".format(mux, text, 
+            ", ".join(
+                "{} = {}[{}]".format(symtab.get_symbol(var), mux, index)
+                for index, var in enumerate(outputs)))
+
+def format_guard(operation, symtab):
+    if operation.name in binops and len(operation.inputs) == 2 and len(operation.outputs) == 0:
+        a = symtab.get_symbol(operation.inputs[0])
+        b = symtab.get_symbol(operation.inputs[1])
+        cond = "{} {} {}".format(a, operation.name, b)
+        return "if ({})".format(cond)
+    else:
+        cond = "{0}({1})".format(
+            operation.name,
+            ", ".join(symtab.get_symbol(var)
+                for var in operation.inputs))
+        return "if ({})".format(cond)
+
+binops = set([
+    "!=", "==", "<=", ">=", "<", ">",
+])
 
 # For computing relooping, we have to determine
 # which other labels each label can reach.

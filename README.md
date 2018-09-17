@@ -14,21 +14,32 @@ it'd be nice to reuse this project rather see the work getting duplicated.
 
 The backend target of this project is Javascript.
 
+## Motivation
+
+Horn-clauses can be used to form an IR that is easy to comprehend
+yet sufficient for automatic optimization.
+Delimited continuations can implement exception handling, iteration,
+backtracking and green threads.
+Combining the two results in a language
+that has minimal concepts for control flow,
+but is just as capable as the most complex languages designed.
+
+If the delimited continuations are given labels
+they become equivalent to algebraic effect handlers.
+
+The resulting structure appears to bear simplicity
+to the point of being absurd and infectious.
+
 ## Progress
 
+The input clause to produce the following output would be:
+
+    gcd(a, b; ret) <- b != 0, gcd(b, a % b, ret).
+    gcd(a, b; ret) <- b == 0, ret = a.
+
+The IR parser is not ready, so the structures are built in Python code.
+
 `python jsb.py` produces the following output:
-
-    function gcd (v_a, v_b) {
-      if (!=(v_b, 0)) {
-        [v_c] = mod(v_a, v_b);
-        [v_d] = gcd(v_b, v_c);
-        return v_d;
-      } else {
-        return v_a;
-      }
-    }
-
-The output should be rewritten to look like this:
 
     function gcd (v_a, v_b) {
       var v_c, v_d;
@@ -41,7 +52,7 @@ The output should be rewritten to look like this:
       }
     }
 
-After this point the relooper can be introduced.
+Next the relooper can be introduced.
 
 ## Directory contents
 
