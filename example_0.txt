@@ -1,0 +1,5 @@
+hello + world + garbage
+foo <-
+    a + b + c
+    e + (f + g)
+#hello(a, b = 4e10, "a b c", 9E-2, c == 5.6)

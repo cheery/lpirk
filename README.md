@@ -34,10 +34,11 @@ to the point of being absurd and infectious.
 
 The input clause to produce the following output would be:
 
-    gcd(a, b; ret) <- b != 0, gcd(b, a % b, ret).
+    gcd(a, b; ret) <- b != 0, gcd(b, a % b; ret).
     gcd(a, b; ret) <- b == 0, ret = a.
 
-The IR parser is not ready, so the structures are built in Python code.
+The IR parser is finished but not configured,
+so the structures are built in Python code.
 
 `python jsb.py` produces the following output:
 
@@ -52,11 +53,13 @@ The IR parser is not ready, so the structures are built in Python code.
       }
     }
 
+
 Next the relooper can be introduced.
 
 ## Directory contents
 
- * lexing.py - For sample program inputs and other such things.
+ * lpirk - frontend script for using the contents of this project.
+ * parsing.py - For sample program inputs and other such things.
  * forms.py - Formats and structured used in the system.
  * jsb.py - Javascript backend.
 
@@ -66,6 +69,7 @@ Next the relooper can be introduced.
 "Horn-Clauses as an Intermediate Representation for Program Analysis and Transformation"
  * [Delimited continuations](https://en.wikipedia.org/wiki/Delimited_continuation)
  * [Emscripten's relooper algorithm](https://www.researchgate.net/publication/221320724_Emscripten_an_LLVM-to-JavaScript_compiler)
+ * [Simple and Efficient Construction of SSA Form](https://pp.info.uni-karlsruhe.de/uploads/publikationen/braun13cc.pdf)
 
 ## Errors made during development
 
