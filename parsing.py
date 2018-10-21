@@ -39,15 +39,15 @@ class Compound(object):
                 ", ".join(repr(t) for t in self.terms))
 
 def expression(parsing, rbp, vcol):
-    stacking = (rbp == 0 and parsing.line_begin)
+    stacking = (rbp == 0 and parsing.line_begin and vcol < parsing.token.start[0])
     if stacking:
         vcol = parsing.token.start[0]
     # advancing with null denotation
-    left = nud[parsing.token.name](parsing)
+    left = nud[parsing.token.name](parsing, vcol)
     while (rbp < lbp.get(parsing.token.name, 0) and
         not (parsing.line_begin and parsing.token.start[0] <= vcol)):
         # advancing with left denotation
-        left = led[parsing.token.name](parsing, left)
+        left = led[parsing.token.name](parsing, left, vcol)
     if stacking and parsing.line_begin and parsing.token.start[0] == vcol:
         left = Compound("\\\\", [left, expression(parsing, rbp, vcol)])
     return left
@@ -74,7 +74,7 @@ nud = {} # Null denotation
 led = {} # Left denotation
 lbp = {} # Left binding power
 
-def nud_symbol(parsing):
+def nud_symbol(parsing, vcol):
     name = parsing.token.string
     parsing.advance()
     if parsing.token.name == "(":
@@ -86,22 +86,26 @@ def nud_symbol(parsing):
 nud['symbol'] = nud_symbol
 
 lbp['+'] = 10
-def led_infix(parsing, left):
+def led_infix(parsing, left, vcol):
     name = parsing.token.name
     parsing.advance()
-    right = expression(parsing, 10, 0)
+    right = expression(parsing, 10, vcol)
     return Compound(name, [left, right])
 led['+'] = led_infix
 
 lbp['<-'] = 1
-def led_infix_arrow(parsing, left):
+def led_infix_arrow(parsing, left, vcol):
     name = parsing.token.name
     parsing.advance()
-    right = expression(parsing, 0, 0)
+    right = expression(parsing, 0, vcol)
     return Compound(name, [left, right])
 led['<-'] = led_infix_arrow
 
-def nud_grouping(parsing):
+lbp[':-'] = 1
+led[':-'] = led_infix_arrow
+
+
+def nud_grouping(parsing, vcol):
     parsing.advance()
     group = expression(parsing, 0, 0)
     expect(parsing, ')')
